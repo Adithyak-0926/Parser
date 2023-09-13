@@ -24,12 +24,10 @@ import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorTable;
 import org.apache.calcite.sql.parser.SqlAbstractParserImpl;
 import org.apache.calcite.sql.parser.SqlParseException;
-import org.apache.calcite.sql.parser.SqlParser;
 import org.apache.calcite.sql.parser.impl.SqlParserImpl;
 import org.apache.calcite.sql.type.SqlTypeCoercionRule;
 import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
@@ -39,7 +37,6 @@ import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
 import org.apache.calcite.sql2rel.StandardConvertletTable;
-import org.apache.calcite.tools.Frameworks;
 import org.apache.calcite.tools.Programs;
 import org.apache.calcite.util.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +77,7 @@ public class HepSqlPlanner extends SqlParser1
 //CoreRules.JOIN_SUB_QUERY_TO_CORRELATE);
     private final SqlValidator m_validator;
     private final SqlToRelConverter m_converter;
+    private final SqlToRelConverterPlus m_converterPLus;
     private final org.apache.calcite.sql.parser.SqlParser.Config m_parserConfig;
 
     //    protected static final Logger s_logger = Utility.getLogger();
@@ -92,13 +90,14 @@ public class HepSqlPlanner extends SqlParser1
 //    public final SqlAbstractParserImpl abstractParser;
 
     protected HepSqlPlanner(CalciteConnectionConfig config, RelOptCluster cluster, SqlValidator validator,
-                            SqlToRelConverter converter, ArrayList<Pair<HepProgram, HepPlanner>> mapOfHEPPrograms, CalciteSchema schema,
+                            SqlToRelConverter converter, SqlToRelConverterPlus mConverterPLus, ArrayList<Pair<HepProgram, HepPlanner>> mapOfHEPPrograms, CalciteSchema schema,
                             Quoting quoting)
 //    SqlAbstractParserImpl abstractParser)
     {
 //        super(abstractParser,(SqlParser.Config) config);
         m_validator = validator;
         m_converter =  converter;
+        m_converterPLus = mConverterPLus;
 //        this.abstractParser = abstractParser;
         m_parserConfig = org.apache.calcite.sql.parser.SqlParser.config()
                 .withParserFactory(SqlParserImpl.FACTORY)
@@ -184,7 +183,8 @@ public class HepSqlPlanner extends SqlParser1
 
         SqlToRelConverter converter = new SqlToRelConverter(NOOP_EXPANDER,validator,catalogReader,cluster,StandardConvertletTable.INSTANCE,converterConfig);
 
-        return new HepSqlPlanner(config, cluster, validator, converter,  mapOfHEPPrograms, rootCalciteSchema,
+        SqlToRelConverterPlus converterPlus = new SqlToRelConverterPlus(NOOP_EXPANDER,validator,catalogReader,cluster,StandardConvertletTable.INSTANCE,converterConfig);
+        return new HepSqlPlanner(config, cluster, validator, converter, converterPlus, mapOfHEPPrograms, rootCalciteSchema,
                  quoting);
     }
 
@@ -215,7 +215,7 @@ public class HepSqlPlanner extends SqlParser1
 
     protected RelNode convert(SqlNode node)
     {
-        RelRoot root = m_converter.convertQuery(validateNode(node), false, true);
+        RelRoot root = m_converterPLus.convertQuery(validateNode(node), false, true);
 
         return root.rel;
     }

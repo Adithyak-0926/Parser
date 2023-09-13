@@ -34,9 +34,9 @@ public class LengthMappingTest {
 //                "FROM customSchema.emps e\n" +
 //                "JOIN customSchema.depts d ON e.deptno = d.deptno\n"
 
-//        String sqlQuery = "SELECT Len('AKA',5), CharLen(5,'AKA')";
-        String sqlQuery = "SELECT CHAR_LENGTH(name) AS LengthOfName\n" +
-                "FROM emps\n";
+        String sqlQuery = "SELECT Len('AKA',5), CharLen(5,'AKA')";
+//        String sqlQuery = "SELECT CHAR_LENGTH(name) AS LengthOfName\n" +
+//                "FROM emps\n";
 
         CalciteSchema schema = CalciteSchema.createRootSchema(true);
 //        SchemaCustom customSchema = new SchemaCustom();

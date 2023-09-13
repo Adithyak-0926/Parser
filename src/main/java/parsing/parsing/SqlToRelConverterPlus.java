@@ -49,28 +49,31 @@ protected final RexBuilder rexBuilder;
             final boolean needsValidation,
             final boolean top) {
 
-            RelRoot result = super.convertQuery(query,needsValidation,top);
+            RelRoot result = super.convertQuery(query, needsValidation, top);
 
             return result.withRel(result.rel.accept(new swappableShuttle()));
 //        return result.withRel(result.rel.accept(new swappableShuttlePlus()));
+
+
     }
 
 
      class swappableShuttle extends RexShuttle{
 
         @Override public RexNode visitCall(RexCall call){
-            if (call.getOperator() == SqlStdOperatorTableNew.LEN || call.getOperator() == SqlStdOperatorTableNew.CHAR_LEN) {
 
+            SqlOperator operator = call.getOperator();
+            if (call.getOperator() == SqlStdOperatorTableNew.LEN || call.getOperator() == SqlStdOperatorTableNew.CHAR_LEN) {
                 RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl(RelDataTypeSystem.DEFAULT);
                 RexBuilder rexBuilder = new RexBuilder(typeFactory);
 //                 Replace
                 List<RexNode> operands = call.getOperands();
                 if(call.getOperator() == SqlStdOperatorTableNew.CHAR_LEN){
-//                    Collections.swap(operands, 0, 1);
+//                if(isInSwappables(operator)){
                     List<RexNode> swappedOperands = new ArrayList<>();
                     swappedOperands.add(operands.get(1));
                     swappedOperands.add(operands.get(0));
-                    return rexBuilder.makeCall(SqlStdOperatorTableNew.LEN,swappedOperands);
+                    return rexBuilder.makeCall(operator,swappedOperands);
                 }
 //                when I tried to use rexBuilder directly from constructor, it is showing error saying local variable is not present
                 return rexBuilder.makeCall(SqlStdOperatorTableNew.LEN, operands);
